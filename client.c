@@ -52,6 +52,15 @@ int select_file(char *filename) {
 	return 400;
 }
 
+void wrap_message(char *filename, char* buf) {
+	char aux[BUFSZ];
+	strcat(aux, filename);
+	strcat(aux, buf);
+	strcat(aux, "\\end");
+
+	strcpy(buf, aux);
+}
+
 int send_file(int s, char *filename) {
 	if (filename == NULL)
 		return 404;
@@ -65,6 +74,8 @@ int send_file(int s, char *filename) {
 	while (fgets(buf, BUFSZ-1, fp) != NULL) {
 		buf[strcspn(buf, "\n")] = '\0';
 	}
+
+	wrap_message(buf);
 
 	// Send buf to server
 	size_t count = send(s, buf, strlen(buf)+1, 0);
