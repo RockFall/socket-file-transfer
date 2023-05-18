@@ -4,6 +4,8 @@
 
 #include <arpa/inet.h>
 
+void close_connection(int csock);
+
 void logexit(const char *msg);
 
 int addrparse(const char *addrstr, const char *portstr,
