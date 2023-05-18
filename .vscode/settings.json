@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "limits": "c"
+        "limits": "c",
+        "bitset": "c",
+        "chrono": "c",
+        "algorithm": "c"
     }
 }

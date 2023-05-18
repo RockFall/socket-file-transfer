@@ -19,7 +19,7 @@ void usage(int argc, char **argv) {
 
 int select_file(char *filename) {
 	// Checks if file exists
-	if (filename == NULL)
+	if (filename[0] == '\0')
 		return 404;
 
 	// Checks if file is valid
@@ -62,20 +62,23 @@ void wrap_message(char *filename, char* buf) {
 }
 
 int send_file(int s, char *filename) {
-	if (filename == NULL)
+	if (filename[0] == '\0')
 		return 404;
 
 	// Setup
 	char buf[BUFSZ];
 	memset(buf, 0, BUFSZ);
+
 	FILE *fp = fopen(filename, "r");
+	if (fp == NULL) {
+        return 404;
+    }
 
 	// Save file's content to buf
-	while (fgets(buf, BUFSZ-1, fp) != NULL) {
-		buf[strcspn(buf, "\n")] = '\0';
-	}
+	fread(buf, 1, BUFSZ - 1, fp);
+    fclose(fp);
 
-	wrap_message(buf);
+	wrap_message(filename, buf);
 
 	// Send buf to server
 	size_t count = send(s, buf, strlen(buf)+1, 0);
@@ -112,15 +115,13 @@ int main(int argc, char **argv) {
 
 	printf("connected to %s\n", addrstr);
 
-
-
 	char buf[BUFSZ];
 	memset(buf, 0, BUFSZ);
-	char *filename = NULL;
+	char filename[100];
+	filename[0] = 0;
 	unsigned total;
 	size_t count;
 	while(1) {
-		
 		// Input
 		memset(buf, 0, BUFSZ);
 		fgets(buf, BUFSZ-1, stdin);
@@ -128,17 +129,17 @@ int main(int argc, char **argv) {
 
 		// Input Action -- select file.
 		if (strncmp(buf, "select file", 11) == 0) {
-			filename = buf + 12;
+			strcpy(filename, buf + 12);
 			int result = select_file(filename);
 			switch (result)
 			{
 			case 404:
 				printf("%s does not exist\n", filename);
-				filename = NULL;
+				strcpy(filename, "");
 				break;
 			case 400:
 				printf("%s not valid\n", filename);
-				filename = NULL;
+				strcpy(filename, "");
 				break;
 			default:
 				printf("%s selected\n", filename);
@@ -148,6 +149,7 @@ int main(int argc, char **argv) {
 		}
 		// Input Action -- send selected file.
 		else if (strncmp(buf, "send file", 9) == 0) {
+			printf("Sending file %s\n", filename);
 			int result = send_file(s, filename);
 			if (result == 404) {
 				printf("no file selected!\n");
@@ -162,13 +164,17 @@ int main(int argc, char **argv) {
 		memset(buf, 0, BUFSZ);
 		total = 0;
 		while (1) {
+			printf(">> loop");
 			count = recv(s, buf + total, BUFSZ - total, 0);
+			printf("\n>> I received %d bytes\n", (int)count);
 			if (count == 0) {
 				// Connection terminated.
+				printf(">> server closed connection\n");
 				break;
 			}
 			total += count;
 		}
+		printf(">> End of while");
 	}
 	close(s);
 

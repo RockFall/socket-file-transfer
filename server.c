@@ -16,6 +16,20 @@ void usage(int argc, char **argv) {
     exit(EXIT_FAILURE);
 }
 
+void extract_filename(char *message, char *filename) {
+    // Find the position of the message content
+    char *messageStart = strchr(message, '\\');
+    if (messageStart == NULL) {
+        strcpy(filename, "");
+        return;
+    }
+    int messageIndex = messageStart - message;
+
+    // Extract the filename part
+    strncpy(filename, message, messageIndex);
+    filename[messageIndex] = '\0';
+}
+
 int main(int argc, char **argv) {
     if (argc < 3) {
         usage(argc, argv);
