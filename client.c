@@ -9,14 +9,20 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define BUFSZ 1024
+#define FILENAMESZ 100
+#define BUFSZ 500
 
+// Prints the usage of the program if the arguments are invalid
 void usage(int argc, char **argv) {
-	printf("usage: %s <server IP> <server port>\n", argv[0]);
-	printf("example: %s 127.0.0.1 51511\n", argv[0]);
+	printf("Modo de Uso: %s <server IP> <server port>\n", argv[0]);
+	printf("Exemplo: %s 127.0.0.1 51511\n", argv[0]);
 	exit(EXIT_FAILURE);
 }
 
+// Extracts the filename and the message from the buffer
+// Returns: [200] if the message is valid
+// 			[400] if the message is invalid
+// 			[404] if the file does not exist
 int select_file(char *filename) {
 	// Checks if file exists
 	if (filename[0] == '\0')
@@ -52,8 +58,11 @@ int select_file(char *filename) {
 	return 400;
 }
 
+// Wrap the message with the filename and the end tag
+// Example: "filename.txtThis is the message\\end"
 void wrap_message(char *filename, char* buf) {
 	char aux[BUFSZ];
+	memset(aux, 0, BUFSZ);
 	strcat(aux, filename);
 	strcat(aux, buf);
 	strcat(aux, "\\end");
@@ -61,6 +70,9 @@ void wrap_message(char *filename, char* buf) {
 	strcpy(buf, aux);
 }
 
+// Sends the file to the server
+// Returns: [200] if the file was sent successfully
+// 			[404] if the file wasn't selected
 int send_file(int s, char *filename) {
 	if (filename[0] == '\0')
 		return 404;
@@ -110,17 +122,10 @@ int main(int argc, char **argv) {
 		logexit("connect");
 	}
 
-	char addrstr[BUFSZ];
-	addrtostr(addr, addrstr, BUFSZ);
-
-	printf("connected to %s\n", addrstr);
-
 	char buf[BUFSZ];
-	memset(buf, 0, BUFSZ);
-	char filename[100];
-	filename[0] = 0;
-	unsigned total;
-	size_t count;
+	char filename[FILENAMESZ];
+	memset(filename, 0, FILENAMESZ);
+
 	while(1) {
 		// Input
 		memset(buf, 0, BUFSZ);
@@ -129,27 +134,30 @@ int main(int argc, char **argv) {
 
 		// Input Action -- select file.
 		if (strncmp(buf, "select file", 11) == 0) {
-			strcpy(filename, buf + 12);
+			char new_filename[FILENAMESZ];
+			memset(new_filename, 0, FILENAMESZ);
+			strcpy(new_filename, buf + 12);
+
+			// Checks if file is valid
 			int result = select_file(filename);
+
 			switch (result)
 			{
 			case 404:
-				printf("%s does not exist\n", filename);
-				strcpy(filename, "");
+				printf("%s does not exist!\n", filename);
 				break;
 			case 400:
-				printf("%s not valid\n", filename);
-				strcpy(filename, "");
+				printf("%s not valid!\n", filename);
 				break;
 			default:
-				printf("%s selected\n", filename);
+				printf("%s selected!\n", filename);
+				strcpy(filename, new_filename);
 				break;
 			}
 			continue;
 		}
 		// Input Action -- send selected file.
 		else if (strncmp(buf, "send file", 9) == 0) {
-			printf("Sending file %s\n", filename);
 			int result = send_file(s, filename);
 			if (result == 404) {
 				printf("no file selected!\n");
@@ -162,20 +170,13 @@ int main(int argc, char **argv) {
 		}
 
 		memset(buf, 0, BUFSZ);
-		total = 0;
-		while (1) {
-			printf(">> loop");
-			count = recv(s, buf + total, BUFSZ - total, 0);
-			printf("\n>> I received %d bytes\n", (int)count);
-			if (count == 0) {
-				// Connection terminated.
-				printf(">> server closed connection\n");
-				break;
-			}
-			total += count;
-		}
-		printf(">> End of while");
+		recv(s, buf, BUFSZ - 1, 0);
+		printf("%s", buf);
+
+		if (strcmp(buf, "connection closed\n") == 0)
+			break;
 	}
+
 	close(s);
 
 	exit(EXIT_SUCCESS);
