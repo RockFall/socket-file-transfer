@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 #define FILENAMESZ 100
-#define BUFSZ 500
+#define BUFSZ 1024
 
 void usage(int argc, char **argv) {
     printf("Forma de uso: %s <v4|v6> <server port>\n", argv[0]);
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
             // Extracting filename and message
             char filename[FILENAMESZ];
-            memset(filename, 0, BUFSZ);
+            memset(filename, 0, FILENAMESZ);
             char message[BUFSZ];
             memset(message, 0, BUFSZ);
             

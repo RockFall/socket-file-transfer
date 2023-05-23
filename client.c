@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 #define FILENAMESZ 100
-#define BUFSZ 500
+#define BUFSZ 1024
 
 // Prints the usage of the program if the arguments are invalid
 void usage(int argc, char **argv) {
@@ -139,18 +139,18 @@ int main(int argc, char **argv) {
 			strcpy(new_filename, buf + 12);
 
 			// Checks if file is valid
-			int result = select_file(filename);
+			int result = select_file(new_filename);
 
 			switch (result)
 			{
 			case 404:
-				printf("%s does not exist!\n", filename);
+				printf("%s does not exist!\n", new_filename);
 				break;
 			case 400:
-				printf("%s not valid!\n", filename);
+				printf("%s not valid!\n", new_filename);
 				break;
 			default:
-				printf("%s selected!\n", filename);
+				printf("%s selected!\n", new_filename);
 				strcpy(filename, new_filename);
 				break;
 			}
