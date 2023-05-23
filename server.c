@@ -19,7 +19,7 @@ void usage(int argc, char **argv) {
 
 int extract_data(char *buf, char *filename, char *message) {
     // Find the position of the filename
-    char *filename_pos = strrchr(buf, '.');
+    char *filename_pos = strchr(buf, '.');
     if (filename_pos == NULL) {
         return 400;
     }
@@ -123,11 +123,13 @@ int main(int argc, char **argv) {
             logexit("accept");
         }
 
+        int must_exit = 0;
         while (1)
         {
             char buf[BUFSZ];
             memset(buf, 0, BUFSZ);
             recv(csock, buf, BUFSZ - 1, 0);
+            //printf("Received:\n%s\n\n", buf);
 
             // Dealing with exit
             if (strcmp(buf, "exit\\end") == 0) {
@@ -137,6 +139,12 @@ int main(int argc, char **argv) {
                 if (count != strlen(buf) + 1) {
                     logexit("send");
                 }
+                must_exit = 1;
+                break;
+            }
+
+            // Dealing with bad command
+            if (strcmp(buf, "invalid_cmd\\end") == 0) {
                 break;
             }
 
@@ -176,6 +184,10 @@ int main(int argc, char **argv) {
         }
         
         close(csock);
+
+        if (must_exit == 1) {
+            break;
+        }
     }
 
     exit(EXIT_SUCCESS);

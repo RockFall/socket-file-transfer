@@ -3,6 +3,7 @@
         "limits": "c",
         "bitset": "c",
         "chrono": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "inet.h": "c"
     }
 }

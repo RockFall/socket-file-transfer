@@ -93,6 +93,7 @@ int send_file(int s, char *filename) {
 	wrap_message(filename, buf);
 
 	// Send buf to server
+	//printf("Sending file:\n%s\n\n", buf);
 	size_t count = send(s, buf, strlen(buf)+1, 0);
 	if (count != strlen(buf)+1) {
 		logexit("send");
@@ -166,6 +167,19 @@ int main(int argc, char **argv) {
 		}
 		// Input Action -- terminate session.
 		else if (strncmp(buf, "exit", 4) == 0) {
+			memset(buf, 0, BUFSZ);
+			strcpy(buf, "exit\\end");
+			size_t count = send(s, buf, strlen(buf)+1, 0);
+			if (count != strlen(buf)+1) {
+				logexit("send");
+			}
+		} else {
+			memset(buf, 0, BUFSZ);
+			strcpy(buf, "invalid_cmd\\end");
+			size_t count = send(s, buf, strlen(buf)+1, 0);
+			if (count != strlen(buf)+1) {
+				logexit("send");
+			}
 			break;
 		}
 
